@@ -1,0 +1,32 @@
+model FlashcardSet {
+    id          String   @id @default(uuid())
+    moduleId    String
+    title       String // ví dụ: "Vocabulary Unit 1"
+    description String?
+    order       Int // thứ tự trong module
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    module     Module      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+    flashcards Flashcard[]
+
+    @@map("flashcard_sets")
+}
+
+model Flashcard {
+    id             String   @id @default(uuid())
+    flashcardSetId String
+    front          String // mặt trước: từ vựng / câu hỏi
+    back           String // mặt sau: nghĩa / câu trả lời
+    example        String? // câu ví dụ (optional)
+    pronunciation  String? // phát âm IPA, ví dụ: /həˈloʊ/
+    audioUrl       String? // link file audio phát âm
+    imageUrl       String? // hình minh họa
+    order          Int // thứ tự trong bộ
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    flashcardSet FlashcardSet @relation(fields: [flashcardSetId], references: [id], onDelete: Cascade)
+
+    @@map("flashcards")
+}

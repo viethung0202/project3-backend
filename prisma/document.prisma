@@ -1,0 +1,16 @@
+model Document {
+    id           String   @id @default(uuid())
+    title        String
+    description  String?
+    fileUrl      String
+    fileType     String? // pdf, docx, mp4, ...
+    courseId     String? // optional, có thể không gắn course nào
+    uploadedById String
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+
+    course     Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+    uploadedBy User    @relation(fields: [uploadedById], references: [id])
+
+    @@map("documents")
+}

@@ -1,0 +1,21 @@
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  fullName  String
+  phone     String?
+  avatar    String?
+  role      Role
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdCourses    Course[]        @relation("CourseCreator") // giáo vụ tạo
+  teachingCourses   CourseTeacher[] // giáo viên dạy
+  enrollments       Enrollment[] // học sinh enroll
+  quizAttempts      QuizAttempt[] // học sinh làm quiz
+  uploadedDocuments Document[] // giáo vụ upload tài liệu
+
+  @@map("users")
+}

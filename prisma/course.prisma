@@ -1,0 +1,34 @@
+model Course {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  thumbnail   String?
+  level       CourseLevel  @default(BEGINNER)
+  status      CourseStatus @default(DRAFT)
+  createdById String // giáo vụ tạo
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  createdBy   User            @relation("CourseCreator", fields: [createdById], references: [id])
+  modules     Module[]
+  teachers    CourseTeacher[]
+  enrollments Enrollment[]
+  documents   Document[]
+
+  @@map("courses")
+}
+
+// Bảng trung gian: 1 course có nhiều giáo viên, 1 giáo viên dạy nhiều course
+model CourseTeacher {
+  id         String   @id @default(uuid())
+  courseId   String
+  teacherId  String
+  assignedAt DateTime @default(now())
+
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacher User   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, teacherId])
+  @@map("course_teachers")
+}

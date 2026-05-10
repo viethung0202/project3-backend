@@ -1,0 +1,30 @@
+enum Role {
+  ADMIN
+  ACADEMIC_STAFF // Giáo vụ
+  ADMIN_STAFF // Hành chính
+  TEACHER
+  STUDENT
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+}

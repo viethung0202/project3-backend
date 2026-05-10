@@ -1,0 +1,14 @@
+model Lesson {
+    id        String   @id @default(uuid())
+    moduleId  String
+    title     String
+    content   String? // nội dung dạng text/HTML
+    videoUrl  String? // link video (nếu có)
+    order     Int // thứ tự lesson trong module
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+    @@map("lessons")
+}

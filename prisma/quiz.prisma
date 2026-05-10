@@ -1,0 +1,42 @@
+model Quiz {
+    id           String   @id @default(uuid())
+    moduleId     String
+    title        String
+    description  String?
+    timeLimit    Int? // phút, null = không giới hạn
+    passingScore Int      @default(50) // điểm % để pass
+    order        Int
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+
+    module    Module        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+    questions Question[]
+    attempts  QuizAttempt[]
+
+    @@map("quizzes")
+}
+
+model Question {
+    id      String       @id @default(uuid())
+    quizId  String
+    content String
+    type    QuestionType @default(SINGLE_CHOICE)
+    points  Int          @default(1)
+    order   Int
+
+    quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+    answers Answer[]
+
+    @@map("questions")
+}
+
+model Answer {
+    id         String  @id @default(uuid())
+    questionId String
+    content    String
+    isCorrect  Boolean @default(false)
+
+    question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+    @@map("answers")
+}

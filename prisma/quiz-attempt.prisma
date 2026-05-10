@@ -1,0 +1,14 @@
+model QuizAttempt {
+    id          String        @id @default(uuid())
+    quizId      String
+    studentId   String
+    score       Float? // điểm phần trăm
+    status      AttemptStatus @default(IN_PROGRESS)
+    startedAt   DateTime      @default(now())
+    submittedAt DateTime?
+
+    quiz    Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+    student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+    @@map("quiz_attempts")
+}

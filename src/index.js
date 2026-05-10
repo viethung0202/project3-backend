@@ -1,11 +1,55 @@
 import express from 'express';
-import cookieParser from 'cookie-parser';
-import 'dotenv/config';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+import { connectDB } from './configs/index.js';
+import authRoute from './routes/auth.route.js';
+
+// Load biến môi trường
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3678;
 
-app.listen(PORT, async () => {
-  console.log(`Server is running on port ${PORT}`);
-  await connectDB();
+// ====================== MIDDLEWARE ======================
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ====================== ROUTES ======================
+app.use('/api/auth', authRoute);
+
+// Route test cơ bản
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Backend API đang chạy!',
+    version: '1.0.0',
+  });
 });
+
+// ====================== ERROR HANDLING ======================
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Có lỗi xảy ra từ server',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+  });
+});
+
+// ====================== START SERVER ======================
+const startServer = async () => {
+  try {
+    await connectDB(); // Kết nối Database
+
+    const PORT = process.env.PORT || 5000;
+
+    app.listen(PORT, () => {
+      console.log(` Server đang chạy tại: http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error(' Không thể khởi động server:', error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
