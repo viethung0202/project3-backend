@@ -17,14 +17,14 @@ const register = async (userData) => {
 
   // Hash password
   const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash(password, salt);
+  const hashedPassword = await bcrypt.hash(password, salt);
 
   // Tạo user mới
   const newUser = await prisma.user.create({
     data: {
       fullName,
       email,
-      passwordHash,
+      password: hashedPassword,
       role,
     },
     select: {
@@ -46,7 +46,7 @@ const login = async (email, password) => {
       id: true,
       fullName: true,
       email: true,
-      passwordHash: true,
+      password: true,
       role: true,
     },
   });
@@ -55,7 +55,7 @@ const login = async (email, password) => {
     throw new Error('Email hoặc mật khẩu không đúng');
   }
 
-  const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+  const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) {
     throw new Error('Email hoặc mật khẩu không đúng');
   }
@@ -71,7 +71,7 @@ const login = async (email, password) => {
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
   );
 
-  const { passwordHash, ...userInfo } = user;
+  const { password: _password, ...userInfo } = user;
 
   return {
     user: userInfo,

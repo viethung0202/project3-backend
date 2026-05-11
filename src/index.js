@@ -1,9 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 
 import { connectDB } from './configs/index.js';
 import authRoute from './routes/auth.route.js';
+import courseRoute from './routes/course.route.js';
+import lessonRoute from './routes/lesson.route.js';
+import moduleRoute from './routes/module.route.js';
+import userRoute from './routes/user.route.js';
 
 // Load biến môi trường
 dotenv.config();
@@ -14,9 +19,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // ====================== ROUTES ======================
 app.use('/api/auth', authRoute);
+app.use('/api/courses', courseRoute);
+app.use('/api/lessons', lessonRoute);
+app.use('/api/modules', moduleRoute);
+app.use('/api/users', userRoute);
 
 // Route test cơ bản
 app.get('/', (req, res) => {

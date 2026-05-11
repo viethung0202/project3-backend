@@ -56,7 +56,22 @@ const login = async (req, res) => {
   }
 };
 
+const tetsLogin = async (req, res) => {
+  res.status(200).json({ success: true, user: req.user });
+};
+
+const logout = (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+  res.status(200).json({ success: true, message: 'Logout successful' });
+};
+
 export default {
   register,
   login,
+  tetsLogin,
+  logout,
 };
