@@ -3,6 +3,7 @@ import courseController from '../controllers/course.controller.js';
 import moduleController from '../controllers/module.controller.js';
 import { protectRoute } from '../middlewares/protectRoute.js';
 import { requireRole } from '../middlewares/requireRole.js';
+import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
@@ -10,6 +11,7 @@ router.post(
   '/',
   protectRoute,
   requireRole(['ACADEMIC_STAFF']),
+  upload.single('thumbnail'),
   courseController.createCourse,
 );
 router.get('/', courseController.getAllCourses);
@@ -25,6 +27,7 @@ router.put(
   '/:id',
   protectRoute,
   requireRole(['ACADEMIC_STAFF']),
+  upload.single('thumbnail'),
   courseController.updateCourse,
 );
 router.delete(

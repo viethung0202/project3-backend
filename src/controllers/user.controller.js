@@ -1,4 +1,5 @@
 import userService from '../services/user.service.js';
+import cloudinaryService from '../configs/cloudinary.js';
 
 const getAllUsers = async (req, res) => {
   try {
@@ -34,6 +35,10 @@ const getUserById = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
+    if (req.file) {
+      req.body.avatar = await cloudinaryService.uploadImage(req.file);
+    }
+
     const user = await userService.updateUser(req.params.id, req.body);
 
     res.status(200).json({

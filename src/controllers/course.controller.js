@@ -1,7 +1,12 @@
 import courseService from '../services/course.service.js';
+import cloudinaryService from '../configs/cloudinary.js';
 
 const createCourse = async (req, res) => {
   try {
+    if (req.file) {
+      req.body.thumbnail = await cloudinaryService.uploadImage(req.file);
+    }
+
     const course = await courseService.createCourse(req.body, req.user.id);
 
     res.status(201).json({
@@ -51,6 +56,10 @@ const getCourseById = async (req, res) => {
 
 const updateCourse = async (req, res) => {
   try {
+    if (req.file) {
+      req.body.thumbnail = await cloudinaryService.uploadImage(req.file);
+    }
+
     const course = await courseService.updateCourse(req.params.id, req.body);
 
     res.status(200).json({

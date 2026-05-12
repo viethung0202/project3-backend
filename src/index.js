@@ -13,11 +13,18 @@ import moduleRoute from './routes/module.route.js';
 import questionRoute from './routes/question.route.js';
 import quizRoute from './routes/quiz.route.js';
 import userRoute from './routes/user.route.js';
+import { v2 as cloudinary } from 'cloudinary';
 
 // Load biến môi trường
 dotenv.config();
 
 const app = express();
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // ====================== MIDDLEWARE ======================
 app.use(cors());

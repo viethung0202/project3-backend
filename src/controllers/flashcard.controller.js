@@ -1,4 +1,5 @@
 import flashcardService from '../services/flashcard.service.js';
+import cloudinaryService from '../configs/cloudinary.js';
 
 const getFlashcardSetsByModuleId = async (req, res) => {
   try {
@@ -76,6 +77,10 @@ const deleteFlashcardSet = async (req, res) => {
 
 const createFlashcard = async (req, res) => {
   try {
+    if (req.file) {
+      req.body.imageUrl = await cloudinaryService.uploadImage(req.file);
+    }
+
     const flashcard = await flashcardService.createFlashcard(
       req.params.setId,
       req.body,
@@ -96,6 +101,10 @@ const createFlashcard = async (req, res) => {
 
 const updateFlashcard = async (req, res) => {
   try {
+    if (req.file) {
+      req.body.imageUrl = await cloudinaryService.uploadImage(req.file);
+    }
+
     const flashcard = await flashcardService.updateFlashcard(
       req.params.id,
       req.body,
