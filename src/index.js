@@ -5,9 +5,13 @@ import cookieParser from 'cookie-parser';
 
 import { connectDB } from './configs/index.js';
 import authRoute from './routes/auth.route.js';
+import answerRoute from './routes/answer.route.js';
 import courseRoute from './routes/course.route.js';
+import flashcardRoute from './routes/flashcard.route.js';
 import lessonRoute from './routes/lesson.route.js';
 import moduleRoute from './routes/module.route.js';
+import questionRoute from './routes/question.route.js';
+import quizRoute from './routes/quiz.route.js';
 import userRoute from './routes/user.route.js';
 
 // Load biến môi trường
@@ -23,9 +27,13 @@ app.use(cookieParser());
 
 // ====================== ROUTES ======================
 app.use('/api/auth', authRoute);
+app.use('/api/answers', answerRoute);
 app.use('/api/courses', courseRoute);
+app.use('/api', flashcardRoute);
 app.use('/api/lessons', lessonRoute);
 app.use('/api/modules', moduleRoute);
+app.use('/api/questions', questionRoute);
+app.use('/api/quizzes', quizRoute);
 app.use('/api/users', userRoute);
 
 // Route test cơ bản
