@@ -6,6 +6,7 @@ import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
+router.get('/flashcard-sets/:id', flashcardController.getFlashcardSetById);
 router.put(
   '/flashcard-sets/:id',
   protectRoute,

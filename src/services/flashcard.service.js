@@ -57,6 +57,19 @@ const getFlashcardSetsByModuleId = async (moduleId) => {
   };
 };
 
+const getFlashcardSetById = async (id) => {
+  const set = await prisma.flashcardSet.findUnique({
+    where: { id },
+    select: flashcardSetSelect,
+  });
+
+  if (!set) {
+    throw new Error('Flashcard set not found');
+  }
+
+  return set;
+};
+
 const createFlashcardSet = async (moduleId, setData) => {
   const module = await prisma.module.findUnique({
     where: { id: moduleId },
@@ -219,6 +232,7 @@ const deleteFlashcard = async (id) => {
 
 export default {
   getFlashcardSetsByModuleId,
+  getFlashcardSetById,
   createFlashcardSet,
   updateFlashcardSet,
   deleteFlashcardSet,

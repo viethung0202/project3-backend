@@ -6,7 +6,7 @@ import { requireRole } from '../middlewares/requireRole.js';
 const router = express.Router();
 
 router.get('/:id', lessonController.getLessonById);
-router.patch(
+router.put(
   '/:id',
   protectRoute,
   requireRole(['ACADEMIC_STAFF']),

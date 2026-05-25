@@ -19,6 +19,20 @@ const getFlashcardSetsByModuleId = async (req, res) => {
   }
 };
 
+const getFlashcardSetById = async (req, res) => {
+  try {
+    const set = await flashcardService.getFlashcardSetById(req.params.id);
+    res.status(200).json({ success: true, data: set });
+  } catch (error) {
+    res
+      .status(error.message === 'Flashcard set not found' ? 404 : 400)
+      .json({
+        success: false,
+        message: error.message || 'Failed to get flashcard set',
+      });
+  }
+};
+
 const createFlashcardSet = async (req, res) => {
   try {
     const flashcardSet = await flashcardService.createFlashcardSet(
@@ -141,6 +155,7 @@ const deleteFlashcard = async (req, res) => {
 
 export default {
   getFlashcardSetsByModuleId,
+  getFlashcardSetById,
   createFlashcardSet,
   updateFlashcardSet,
   deleteFlashcardSet,

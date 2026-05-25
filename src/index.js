@@ -16,6 +16,7 @@ import userRoute from './routes/user.route.js';
 import adminRoute from './routes/admin.route.js';
 import enrollmentRoute from './routes/enrollment.route.js';
 import staffRoute from './routes/staff.route.js';
+import academicRoute from './routes/academic.route.js';
 import { v2 as cloudinary } from 'cloudinary';
 
 // Load biến môi trường
@@ -53,6 +54,7 @@ app.use('/api/users', userRoute);
 app.use('/api/admin', adminRoute);
 app.use('/api/enrollments', enrollmentRoute);
 app.use('/api/staff', staffRoute);
+app.use('/api/academic', academicRoute);
 
 // Route test cơ bản
 app.get('/', (req, res) => {
