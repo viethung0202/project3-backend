@@ -24,8 +24,9 @@ model Question {
     points  Int          @default(1)
     order   Int
 
-    quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-    answers Answer[]
+    quiz           Quiz                @relation(fields: [quizId], references: [id], onDelete: Cascade)
+    answers        Answer[]
+    attemptAnswers QuizAttemptAnswer[]
 
     @@map("questions")
 }

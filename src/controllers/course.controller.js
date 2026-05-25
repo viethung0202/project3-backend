@@ -24,7 +24,12 @@ const createCourse = async (req, res) => {
 
 const getAllCourses = async (req, res) => {
   try {
-    const courses = await courseService.getAllCourses();
+    const { status, level, search } = req.query;
+    const courses = await courseService.getAllCourses({
+      status,
+      level,
+      search,
+    });
 
     res.status(200).json({
       success: true,

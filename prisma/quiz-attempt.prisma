@@ -7,8 +7,25 @@ model QuizAttempt {
     startedAt   DateTime      @default(now())
     submittedAt DateTime?
 
-    quiz    Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
-    student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    quiz    Quiz                @relation(fields: [quizId], references: [id], onDelete: Cascade)
+    student User                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    answers QuizAttemptAnswer[]
 
     @@map("quiz_attempts")
+}
+
+// Lưu đáp án mà học sinh chọn cho từng câu hỏi trong 1 attempt
+model QuizAttemptAnswer {
+    id              String   @id @default(uuid())
+    attemptId       String
+    questionId      String
+    selectedAnswers String[] // mảng answer IDs (cho MULTIPLE_CHOICE chọn nhiều)
+    isCorrect       Boolean? // backend tính sẵn khi submit
+    answeredAt      DateTime @default(now())
+
+    attempt  QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+    question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+    @@unique([attemptId, questionId])
+    @@map("quiz_attempt_answers")
 }

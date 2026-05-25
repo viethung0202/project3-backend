@@ -11,10 +11,11 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  createdCourses    Course[]        @relation("CourseCreator") // giáo vụ tạo
+  createdCourses    Course[]           @relation("CourseCreator") // giáo vụ tạo
   teachingCourses   CourseTeacher[] // giáo viên dạy
   enrollments       Enrollment[] // học sinh enroll
   quizAttempts      QuizAttempt[] // học sinh làm quiz
+  lessonCompletions LessonCompletion[] // học sinh hoàn thành lesson
   uploadedDocuments Document[] // giáo vụ upload tài liệu
 
   @@map("users")

@@ -57,7 +57,7 @@ router.delete(
 router.get(
   '/:id/teachers',
   protectRoute,
-  requireRole(['ACADEMIC_STAFF']),
+  requireRole(['ACADEMIC_STAFF', 'TEACHER', 'ADMIN', 'ADMIN_STAFF']),
   courseController.getCourseTeachers,
 );
 

@@ -8,11 +8,18 @@ const router = express.Router();
 const staffRoles = ['ADMIN', 'ADMIN_STAFF'];
 
 router.get('/', protectRoute, requireRole(staffRoles), enrollmentController.list);
-router.post('/', protectRoute, requireRole(staffRoles), enrollmentController.create);
+// STUDENT cũng tạo enrollment được (tự đăng ký), backend forces studentId = req.user.id
+router.post(
+  '/',
+  protectRoute,
+  requireRole([...staffRoles, 'STUDENT']),
+  enrollmentController.create,
+);
+// STUDENT có thể tự hủy đăng ký của mình
 router.delete(
   '/:id',
   protectRoute,
-  requireRole(staffRoles),
+  requireRole([...staffRoles, 'STUDENT']),
   enrollmentController.remove,
 );
 

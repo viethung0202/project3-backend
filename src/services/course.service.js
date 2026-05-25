@@ -21,7 +21,7 @@ const courseSelect = {
 };
 
 const createCourse = async (courseData, createdById) => {
-  const { title, description, thumbnail, level } = courseData;
+  const { title, description, thumbnail, level, status } = courseData;
 
   return prisma.course.create({
     data: {
@@ -29,14 +29,27 @@ const createCourse = async (courseData, createdById) => {
       description,
       thumbnail,
       level,
+      // status là optional — Prisma sẽ dùng default DRAFT nếu không truyền
+      ...(status !== undefined && { status }),
       createdById,
     },
     select: courseSelect,
   });
 };
 
-const getAllCourses = async () => {
+const getAllCourses = async ({ status, level, search } = {}) => {
+  const where = {};
+  if (status) where.status = status;
+  if (level) where.level = level;
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+
   return prisma.course.findMany({
+    where,
     select: {
       ...courseSelect,
       _count: {
@@ -92,13 +105,14 @@ const updateCourse = async (id, courseData) => {
     throw new Error('Course not found');
   }
 
-  const { title, description, thumbnail, level } = courseData;
+  const { title, description, thumbnail, level, status } = courseData;
   const data = {};
 
   if (title !== undefined) data.title = title;
   if (description !== undefined) data.description = description;
   if (thumbnail !== undefined) data.thumbnail = thumbnail;
   if (level !== undefined) data.level = level;
+  if (status !== undefined) data.status = status;
 
   return prisma.course.update({
     where: { id },
