@@ -6,6 +6,7 @@ const lessonSelect = {
   title: true,
   content: true,
   videoUrl: true,
+  pdfUrl: true,
   order: true,
   createdAt: true,
   updatedAt: true,
@@ -54,7 +55,7 @@ const createLesson = async (moduleId, lessonData) => {
     throw new Error('Module not found');
   }
 
-  const { title, content, videoUrl, order } = lessonData;
+  const { title, content, videoUrl, pdfUrl, order } = lessonData;
 
   let nextOrder = order;
   if (nextOrder === undefined || nextOrder === null) {
@@ -73,6 +74,7 @@ const createLesson = async (moduleId, lessonData) => {
       title,
       content,
       videoUrl,
+      pdfUrl,
       order: nextOrder,
     },
     select: lessonSelect,
@@ -102,12 +104,13 @@ const updateLesson = async (id, lessonData) => {
     throw new Error('Lesson not found');
   }
 
-  const { title, content, videoUrl, order } = lessonData;
+  const { title, content, videoUrl, pdfUrl, order } = lessonData;
   const data = {};
 
   if (title !== undefined) data.title = title;
   if (content !== undefined) data.content = content;
   if (videoUrl !== undefined) data.videoUrl = videoUrl;
+  if (pdfUrl !== undefined) data.pdfUrl = pdfUrl;
   if (order !== undefined) data.order = order;
 
   return prisma.lesson.update({

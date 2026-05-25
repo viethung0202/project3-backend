@@ -2,8 +2,9 @@ model Lesson {
     id        String   @id @default(uuid())
     moduleId  String
     title     String
-    content   String? // nội dung dạng text/HTML
+    content   String? // nội dung dạng text (ghi chú ngắn)
     videoUrl  String? // link video (nếu có)
+    pdfUrl    String? // link PDF bài giảng (upload lên Cloudinary)
     order     Int // thứ tự lesson trong module
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

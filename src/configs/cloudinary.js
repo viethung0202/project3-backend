@@ -8,6 +8,45 @@ const uploadImage = async (file) => {
   return uploadResponse.secure_url;
 };
 
+// Video upload qua stream — memory-efficient hơn base64 cho file lớn (50-100MB)
+const uploadVideo = (file) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: 'video',
+        folder: 'lessons',
+      },
+      (err, result) => {
+        if (err) return reject(err);
+        resolve(result.secure_url);
+      },
+    );
+    stream.end(file.buffer);
+  });
+};
+
+// PDF / document upload — dùng resource_type 'raw' cho file không phải image/video
+const uploadPdf = (file) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: 'raw',
+        folder: 'lessons/pdfs',
+        // Giữ extension để URL có .pdf, browser nhận diện đúng MIME
+        public_id: `${Date.now()}_${file.originalname.replace(/\.[^/.]+$/, '')}`,
+        format: 'pdf',
+      },
+      (err, result) => {
+        if (err) return reject(err);
+        resolve(result.secure_url);
+      },
+    );
+    stream.end(file.buffer);
+  });
+};
+
 export default {
   uploadImage,
+  uploadVideo,
+  uploadPdf,
 };

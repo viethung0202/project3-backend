@@ -1,4 +1,5 @@
 import lessonService from '../services/lesson.service.js';
+import cloudinaryService from '../configs/cloudinary.js';
 
 const getLessonsByModuleId = async (req, res) => {
   try {
@@ -18,6 +19,14 @@ const getLessonsByModuleId = async (req, res) => {
 
 const createLesson = async (req, res) => {
   try {
+    // Multer .fields() đặt files vào req.files thay vì req.file
+    if (req.files?.video?.[0]) {
+      req.body.videoUrl = await cloudinaryService.uploadVideo(req.files.video[0]);
+    }
+    if (req.files?.pdf?.[0]) {
+      req.body.pdfUrl = await cloudinaryService.uploadPdf(req.files.pdf[0]);
+    }
+
     const lesson = await lessonService.createLesson(req.params.moduleId, req.body);
 
     res.status(201).json({
@@ -51,6 +60,13 @@ const getLessonById = async (req, res) => {
 
 const updateLesson = async (req, res) => {
   try {
+    if (req.files?.video?.[0]) {
+      req.body.videoUrl = await cloudinaryService.uploadVideo(req.files.video[0]);
+    }
+    if (req.files?.pdf?.[0]) {
+      req.body.pdfUrl = await cloudinaryService.uploadPdf(req.files.pdf[0]);
+    }
+
     const lesson = await lessonService.updateLesson(req.params.id, req.body);
 
     res.status(200).json({

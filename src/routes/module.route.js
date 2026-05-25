@@ -5,6 +5,7 @@ import moduleController from '../controllers/module.controller.js';
 import quizController from '../controllers/quiz.controller.js';
 import { protectRoute } from '../middlewares/protectRoute.js';
 import { requireRole } from '../middlewares/requireRole.js';
+import { uploadVideo } from '../middlewares/upload.js';
 
 const router = express.Router();
 
@@ -19,6 +20,10 @@ router.post(
   '/:moduleId/lessons',
   protectRoute,
   requireRole(['ACADEMIC_STAFF']),
+  uploadVideo.fields([
+    { name: 'video', maxCount: 1 },
+    { name: 'pdf', maxCount: 1 },
+  ]),
   lessonController.createLesson,
 );
 router.get('/:moduleId/quizzes', quizController.getQuizzesByModuleId);
