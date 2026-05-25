@@ -9,11 +9,34 @@ const router = express.Router();
 router.get(
   '/',
   protectRoute,
-  requireRole(['ADMIN', 'ADMIN_STAFF']),
+  requireRole(['ADMIN', 'ADMIN_STAFF', 'ACADEMIC_STAFF']),
   userController.getAllUsers,
 );
-router.get('/:id', protectRoute, userController.getUserById);
-router.put('/:id', protectRoute, upload.single('avatar'), userController.updateUser);
+router.post(
+  '/',
+  protectRoute,
+  requireRole(['ADMIN', 'ADMIN_STAFF']),
+  userController.createUser,
+);
+router.get(
+  '/:id',
+  protectRoute,
+  requireRole(['ADMIN', 'ADMIN_STAFF', 'ACADEMIC_STAFF']),
+  userController.getUserById,
+);
+router.put(
+  '/:id',
+  protectRoute,
+  requireRole(['ADMIN', 'ADMIN_STAFF']),
+  upload.single('avatar'),
+  userController.updateUser,
+);
+router.put(
+  '/:id/toggle-active',
+  protectRoute,
+  requireRole(['ADMIN', 'ADMIN_STAFF']),
+  userController.toggleUserActive,
+);
 router.delete(
   '/:id',
   protectRoute,

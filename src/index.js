@@ -13,6 +13,9 @@ import moduleRoute from './routes/module.route.js';
 import questionRoute from './routes/question.route.js';
 import quizRoute from './routes/quiz.route.js';
 import userRoute from './routes/user.route.js';
+import adminRoute from './routes/admin.route.js';
+import enrollmentRoute from './routes/enrollment.route.js';
+import staffRoute from './routes/staff.route.js';
 import { v2 as cloudinary } from 'cloudinary';
 
 // Load biến môi trường
@@ -47,6 +50,9 @@ app.use('/api/modules', moduleRoute);
 app.use('/api/questions', questionRoute);
 app.use('/api/quizzes', quizRoute);
 app.use('/api/users', userRoute);
+app.use('/api/admin', adminRoute);
+app.use('/api/enrollments', enrollmentRoute);
+app.use('/api/staff', staffRoute);
 
 // Route test cơ bản
 app.get('/', (req, res) => {

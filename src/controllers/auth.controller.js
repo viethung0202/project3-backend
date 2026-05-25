@@ -1,5 +1,6 @@
 // src/controllers/auth.controller.js
 import authService from '../services/auth.service.js';
+import cloudinaryService from '../configs/cloudinary.js';
 
 const register = async (req, res) => {
   try {
@@ -69,9 +70,66 @@ const logout = (req, res) => {
   res.status(200).json({ success: true, message: 'Logout successful' });
 };
 
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const result = await authService.changePassword(
+      req.user.id,
+      currentPassword,
+      newPassword,
+    );
+
+    // Clear cookie để buộc user đăng nhập lại bằng mật khẩu mới
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Đổi mật khẩu thất bại',
+    });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    if (req.file) {
+      req.body.avatar = await cloudinaryService.uploadImage(req.file);
+    }
+
+    // Chỉ cho phép update các field này — chặn role/isActive/email/password
+    const { fullName, phone, avatar } = req.body;
+    const user = await authService.updateProfile(req.user.id, {
+      fullName,
+      phone,
+      avatar,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật thông tin thành công',
+      user,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Cập nhật thất bại',
+    });
+  }
+};
+
 export default {
   register,
   login,
   tetsLogin,
   logout,
+  changePassword,
+  updateProfile,
 };

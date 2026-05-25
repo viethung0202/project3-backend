@@ -2,6 +2,7 @@
 import express from 'express';
 import authController from '../controllers/auth.controller.js';
 import { protectRoute } from '../middlewares/protectRoute.js';
+import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
@@ -9,6 +10,13 @@ const router = express.Router();
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/me', protectRoute, authController.tetsLogin);
+router.put(
+  '/me',
+  protectRoute,
+  upload.single('avatar'),
+  authController.updateProfile,
+);
 router.post('/logout', authController.logout);
+router.post('/change-password', protectRoute, authController.changePassword);
 
 export default router;

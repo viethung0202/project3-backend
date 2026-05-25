@@ -37,7 +37,16 @@ const createCourse = async (courseData, createdById) => {
 
 const getAllCourses = async () => {
   return prisma.course.findMany({
-    select: courseSelect,
+    select: {
+      ...courseSelect,
+      _count: {
+        select: {
+          modules: true,
+          teachers: true,
+          enrollments: true,
+        },
+      },
+    },
     orderBy: { createdAt: 'desc' },
   });
 };
@@ -45,7 +54,25 @@ const getAllCourses = async () => {
 const getCourseById = async (id) => {
   const course = await prisma.course.findUnique({
     where: { id },
-    select: courseSelect,
+    select: {
+      ...courseSelect,
+      modules: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          order: true,
+        },
+        orderBy: { order: 'asc' },
+      },
+      _count: {
+        select: {
+          modules: true,
+          teachers: true,
+          enrollments: true,
+        },
+      },
+    },
   });
 
   if (!course) {

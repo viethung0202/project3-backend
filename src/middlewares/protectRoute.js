@@ -19,7 +19,17 @@ export const protectRoute = async (req, res, next) => {
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
-      select: { id: true, email: true, fullName: true, role: true },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+        avatar: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     if (!user) {
