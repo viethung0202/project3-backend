@@ -82,4 +82,76 @@ const getStats = async (studentId) => {
   };
 };
 
-export default { getMyCourses, getStats };
+const getQuizHistory = async (studentId) => {
+  const attempts = await prisma.quizAttempt.findMany({
+    where: { studentId },
+    orderBy: { startedAt: 'desc' },
+    select: {
+      id: true,
+      status: true,
+      score: true,
+      startedAt: true,
+      submittedAt: true,
+      quiz: {
+        select: {
+          id: true,
+          title: true,
+          passingScore: true,
+          module: {
+            select: {
+              id: true,
+              title: true,
+              course: { select: { id: true, title: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const byQuiz = new Map();
+  for (const a of attempts) {
+    const qid = a.quiz.id;
+    if (!byQuiz.has(qid)) {
+      byQuiz.set(qid, { quiz: a.quiz, attempts: [] });
+    }
+    byQuiz.get(qid).attempts.push({
+      id: a.id,
+      status: a.status,
+      score: a.score,
+      startedAt: a.startedAt,
+      submittedAt: a.submittedAt,
+    });
+  }
+
+  return Array.from(byQuiz.values()).map(({ quiz, attempts: atts }) => {
+    const completed = atts.filter((a) => a.status === 'COMPLETED');
+    const scores = completed.map((a) => a.score ?? 0);
+    const bestScore = scores.length ? Math.max(...scores) : null;
+    const avgScore =
+      scores.length > 0
+        ? Math.round(
+            (scores.reduce((s, n) => s + n, 0) / scores.length) * 100,
+          ) / 100
+        : null;
+    const passed = completed.some(
+      (a) => (a.score ?? 0) >= quiz.passingScore,
+    );
+    const inProgress = atts.find((a) => a.status === 'IN_PROGRESS') || null;
+    return {
+      quiz,
+      stats: {
+        totalAttempts: atts.length,
+        completedAttempts: completed.length,
+        bestScore,
+        avgScore,
+        passed,
+        lastAttemptAt: atts[0]?.startedAt || null,
+        hasInProgress: !!inProgress,
+      },
+      attempts: atts,
+    };
+  });
+};
+
+export default { getMyCourses, getStats, getQuizHistory };

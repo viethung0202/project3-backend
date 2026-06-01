@@ -24,4 +24,16 @@ const getStats = async (req, res) => {
   }
 };
 
-export default { getMyCourses, getStats };
+const getQuizHistory = async (req, res) => {
+  try {
+    const data = await studentService.getQuizHistory(req.user.id);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to get quiz history',
+    });
+  }
+};
+
+export default { getMyCourses, getStats, getQuizHistory };

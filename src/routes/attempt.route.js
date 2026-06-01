@@ -1,27 +1,36 @@
 import express from 'express';
-import studentController from '../controllers/student.controller.js';
+import attemptController from '../controllers/quizAttempt.controller.js';
 import { protectRoute } from '../middlewares/protectRoute.js';
 import { requireRole } from '../middlewares/requireRole.js';
 
 const router = express.Router();
 
 router.get(
-  '/stats',
+  '/:id',
   protectRoute,
   requireRole(['STUDENT']),
-  studentController.getStats,
+  attemptController.getAttempt,
 );
-router.get(
-  '/courses',
+
+router.post(
+  '/:id/answers',
   protectRoute,
   requireRole(['STUDENT']),
-  studentController.getMyCourses,
+  attemptController.saveAnswer,
 );
-router.get(
-  '/quiz-history',
+
+router.post(
+  '/:id/submit',
   protectRoute,
   requireRole(['STUDENT']),
-  studentController.getQuizHistory,
+  attemptController.submitAttempt,
+);
+
+router.get(
+  '/:id/result',
+  protectRoute,
+  requireRole(['STUDENT']),
+  attemptController.getResult,
 );
 
 export default router;
