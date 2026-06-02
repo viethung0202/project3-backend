@@ -36,4 +36,37 @@ const getQuizHistory = async (req, res) => {
   }
 };
 
-export default { getMyCourses, getStats, getQuizHistory };
+const getProgress = async (req, res) => {
+  try {
+    const data = await studentService.getProgress(req.user.id);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to get progress',
+    });
+  }
+};
+
+const getCompletedLessons = async (req, res) => {
+  try {
+    const data = await studentService.getCompletedLessons(
+      req.user.id,
+      req.params.courseId,
+    );
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to get completions',
+    });
+  }
+};
+
+export default {
+  getMyCourses,
+  getStats,
+  getQuizHistory,
+  getProgress,
+  getCompletedLessons,
+};

@@ -23,5 +23,17 @@ router.get(
   requireRole(['STUDENT']),
   studentController.getQuizHistory,
 );
+router.get(
+  '/progress',
+  protectRoute,
+  requireRole(['STUDENT']),
+  studentController.getProgress,
+);
+router.get(
+  '/courses/:courseId/completed-lessons',
+  protectRoute,
+  requireRole(['STUDENT']),
+  studentController.getCompletedLessons,
+);
 
 export default router;

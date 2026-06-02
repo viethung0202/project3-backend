@@ -24,4 +24,18 @@ router.delete(
   lessonController.deleteLesson,
 );
 
+// Student đánh dấu hoàn thành lesson
+router.post(
+  '/:id/complete',
+  protectRoute,
+  requireRole(['STUDENT']),
+  lessonController.markComplete,
+);
+router.delete(
+  '/:id/complete',
+  protectRoute,
+  requireRole(['STUDENT']),
+  lessonController.unmarkComplete,
+);
+
 export default router;

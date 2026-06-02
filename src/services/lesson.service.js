@@ -137,10 +137,74 @@ const deleteLesson = async (id) => {
   return { message: 'Lesson deleted successfully' };
 };
 
+// Cập nhật enrollment.progress = % lessons completed của student trong course đó
+const recomputeProgress = async (studentId, courseId) => {
+  const [totalLessons, completedLessons] = await Promise.all([
+    prisma.lesson.count({ where: { module: { courseId } } }),
+    prisma.lessonCompletion.count({
+      where: { studentId, lesson: { module: { courseId } } },
+    }),
+  ]);
+
+  const progress =
+    totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+
+  await prisma.enrollment.updateMany({
+    where: { studentId, courseId },
+    data: { progress: Math.round(progress * 10) / 10 },
+  });
+
+  return { totalLessons, completedLessons, progress };
+};
+
+const markComplete = async (studentId, lessonId) => {
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    select: { id: true, module: { select: { courseId: true } } },
+  });
+  if (!lesson) throw new Error('Lesson not found');
+
+  const courseId = lesson.module.courseId;
+
+  // Verify student đã enroll khóa học này
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { studentId_courseId: { studentId, courseId } },
+    select: { id: true },
+  });
+  if (!enrollment) {
+    throw new Error('Bạn chưa được đăng ký vào khóa học này');
+  }
+
+  // Upsert — đánh dấu lần nữa không lỗi
+  await prisma.lessonCompletion.upsert({
+    where: { lessonId_studentId: { lessonId, studentId } },
+    create: { lessonId, studentId },
+    update: { completedAt: new Date() },
+  });
+
+  return recomputeProgress(studentId, courseId);
+};
+
+const unmarkComplete = async (studentId, lessonId) => {
+  const lesson = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    select: { id: true, module: { select: { courseId: true } } },
+  });
+  if (!lesson) throw new Error('Lesson not found');
+
+  await prisma.lessonCompletion.deleteMany({
+    where: { lessonId, studentId },
+  });
+
+  return recomputeProgress(studentId, lesson.module.courseId);
+};
+
 export default {
   getLessonsByModuleId,
   createLesson,
   getLessonById,
   updateLesson,
   deleteLesson,
+  markComplete,
+  unmarkComplete,
 };

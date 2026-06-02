@@ -154,4 +154,133 @@ const getQuizHistory = async (studentId) => {
   });
 };
 
-export default { getMyCourses, getStats, getQuizHistory };
+const getProgress = async (studentId) => {
+  const enrollments = await prisma.enrollment.findMany({
+    where: { studentId },
+    orderBy: { enrolledAt: 'desc' },
+    select: {
+      id: true,
+      progress: true,
+      enrolledAt: true,
+      course: {
+        select: {
+          id: true,
+          title: true,
+          thumbnail: true,
+          level: true,
+          status: true,
+          modules: {
+            select: {
+              id: true,
+              lessons: { select: { id: true } },
+              quizzes: { select: { id: true, passingScore: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (enrollments.length === 0) return [];
+
+  // Gom lessonIds + quizIds toàn bộ course đã enroll → fetch completions/attempts 1 lần
+  const allLessonIds = enrollments.flatMap((e) =>
+    e.course.modules.flatMap((m) => m.lessons.map((l) => l.id)),
+  );
+  const allQuizIds = enrollments.flatMap((e) =>
+    e.course.modules.flatMap((m) => m.quizzes.map((q) => q.id)),
+  );
+
+  const [completions, attempts] = await Promise.all([
+    prisma.lessonCompletion.findMany({
+      where: { studentId, lessonId: { in: allLessonIds } },
+      select: { lessonId: true, completedAt: true },
+    }),
+    prisma.quizAttempt.findMany({
+      where: {
+        studentId,
+        quizId: { in: allQuizIds },
+        status: 'COMPLETED',
+      },
+      select: { quizId: true, score: true, submittedAt: true },
+    }),
+  ]);
+
+  const completedLessonIds = new Set(completions.map((c) => c.lessonId));
+  // Best score per quiz
+  const bestScoreByQuiz = new Map();
+  const lastAttemptAtByQuiz = new Map();
+  for (const a of attempts) {
+    const cur = bestScoreByQuiz.get(a.quizId) ?? -1;
+    if ((a.score ?? 0) > cur) bestScoreByQuiz.set(a.quizId, a.score ?? 0);
+    const lastSubmit = lastAttemptAtByQuiz.get(a.quizId);
+    if (!lastSubmit || (a.submittedAt && a.submittedAt > lastSubmit)) {
+      lastAttemptAtByQuiz.set(a.quizId, a.submittedAt);
+    }
+  }
+
+  return enrollments.map((e) => {
+    const lessons = e.course.modules.flatMap((m) => m.lessons);
+    const quizzes = e.course.modules.flatMap((m) => m.quizzes);
+
+    const completedLessons = lessons.filter((l) =>
+      completedLessonIds.has(l.id),
+    ).length;
+    const passedQuizzes = quizzes.filter((q) => {
+      const best = bestScoreByQuiz.get(q.id);
+      return best != null && best >= q.passingScore;
+    }).length;
+
+    const lastActivity = completions
+      .filter((c) => lessons.some((l) => l.id === c.lessonId))
+      .map((c) => c.completedAt)
+      .concat(
+        quizzes
+          .map((q) => lastAttemptAtByQuiz.get(q.id))
+          .filter(Boolean),
+      )
+      .reduce((max, d) => (!max || d > max ? d : max), null);
+
+    return {
+      enrollmentId: e.id,
+      course: {
+        id: e.course.id,
+        title: e.course.title,
+        thumbnail: e.course.thumbnail,
+        level: e.course.level,
+        status: e.course.status,
+      },
+      enrolledAt: e.enrolledAt,
+      progress: e.progress, // % lessons hoàn thành (đã được recompute)
+      lessons: {
+        total: lessons.length,
+        completed: completedLessons,
+      },
+      quizzes: {
+        total: quizzes.length,
+        passed: passedQuizzes,
+      },
+      modules: e.course.modules.length,
+      lastActivity,
+    };
+  });
+};
+
+const getCompletedLessons = async (studentId, courseId) => {
+  const completions = await prisma.lessonCompletion.findMany({
+    where: {
+      studentId,
+      lesson: { module: { courseId } },
+    },
+    select: { lessonId: true, completedAt: true },
+  });
+  return completions;
+};
+
+export default {
+  getMyCourses,
+  getStats,
+  getQuizHistory,
+  getProgress,
+  getCompletedLessons,
+};

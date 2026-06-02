@@ -98,10 +98,50 @@ const deleteLesson = async (req, res) => {
   }
 };
 
+const markComplete = async (req, res) => {
+  try {
+    const data = await lessonService.markComplete(req.user.id, req.params.id);
+    res.status(200).json({
+      success: true,
+      message: 'Đã đánh dấu hoàn thành',
+      data,
+    });
+  } catch (error) {
+    const msg = error.message || '';
+    res
+      .status(
+        msg === 'Lesson not found'
+          ? 404
+          : msg.includes('chưa được đăng ký')
+            ? 403
+            : 400,
+      )
+      .json({ success: false, message: msg || 'Đánh dấu thất bại' });
+  }
+};
+
+const unmarkComplete = async (req, res) => {
+  try {
+    const data = await lessonService.unmarkComplete(req.user.id, req.params.id);
+    res.status(200).json({
+      success: true,
+      message: 'Đã bỏ đánh dấu',
+      data,
+    });
+  } catch (error) {
+    res.status(error.message === 'Lesson not found' ? 404 : 400).json({
+      success: false,
+      message: error.message || 'Bỏ đánh dấu thất bại',
+    });
+  }
+};
+
 export default {
   getLessonsByModuleId,
   createLesson,
   getLessonById,
   updateLesson,
   deleteLesson,
+  markComplete,
+  unmarkComplete,
 };
