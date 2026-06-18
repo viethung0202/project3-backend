@@ -28,3 +28,24 @@ enum AttemptStatus {
   IN_PROGRESS
   COMPLETED
 }
+
+enum TestType {
+  FULL_TEST
+  MINI_TEST
+  PLACEMENT_TEST
+}
+
+enum TestSkill {
+  LISTENING
+  READING
+  LISTENING_READING
+  SPEAKING
+  WRITING
+  SPEAKING_WRITING
+}
+
+enum TestStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}

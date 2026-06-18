@@ -20,6 +20,12 @@ import academicRoute from './routes/academic.route.js';
 import teacherRoute from './routes/teacher.route.js';
 import studentRoute from './routes/student.route.js';
 import attemptRoute from './routes/attempt.route.js';
+import testRoute from './routes/test.route.js';
+import testPartRoute from './routes/testPart.route.js';
+import testPassageRoute from './routes/testPassage.route.js';
+import testQuestionRoute from './routes/testQuestion.route.js';
+import testAnswerRoute from './routes/testAnswer.route.js';
+import testAttemptRoute from './routes/testAttempt.route.js';
 import { v2 as cloudinary } from 'cloudinary';
 
 // Load biến môi trường
@@ -61,6 +67,12 @@ app.use('/api/academic', academicRoute);
 app.use('/api/teacher', teacherRoute);
 app.use('/api/student', studentRoute);
 app.use('/api/attempts', attemptRoute);
+app.use('/api/tests', testRoute);
+app.use('/api/test-parts', testPartRoute);
+app.use('/api/test-passages', testPassageRoute);
+app.use('/api/test-questions', testQuestionRoute);
+app.use('/api/test-answers', testAnswerRoute);
+app.use('/api/test-attempts', testAttemptRoute);
 
 // Route test cơ bản
 app.get('/', (req, res) => {

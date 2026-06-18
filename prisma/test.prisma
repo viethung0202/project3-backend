@@ -1,0 +1,126 @@
+model Test {
+    id              String     @id @default(uuid())
+    title           String
+    description     String?
+    type            TestType
+    skill           TestSkill
+    durationMinutes Int
+    totalQuestions  Int        @default(0)
+    status          TestStatus @default(DRAFT)
+    isGuestAllowed  Boolean    @default(false)
+    createdById     String
+    createdAt       DateTime   @default(now())
+    updatedAt       DateTime   @updatedAt
+
+    createdBy User          @relation(fields: [createdById], references: [id])
+    parts     TestPart[]
+    attempts  TestAttempt[]
+
+    @@map("tests")
+}
+
+model TestPart {
+    id          String   @id @default(uuid())
+    testId      String
+    name        String
+    instruction String?
+    order       Int
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    test      Test           @relation(fields: [testId], references: [id], onDelete: Cascade)
+    passages  TestPassage[]
+    questions TestQuestion[]
+
+    @@unique([testId, order])
+    @@map("test_parts")
+}
+
+model TestPassage {
+    id          String   @id @default(uuid())
+    testPartId  String
+    title       String?
+    content     String?
+    audioUrl    String?
+    imageUrl    String?
+    order       Int
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    testPart  TestPart       @relation(fields: [testPartId], references: [id], onDelete: Cascade)
+    questions TestQuestion[]
+
+    @@unique([testPartId, order])
+    @@map("test_passages")
+}
+
+model TestQuestion {
+    id            String       @id @default(uuid())
+    testPartId    String
+    passageId     String?
+    content       String
+    type          QuestionType @default(SINGLE_CHOICE)
+    points        Int          @default(1)
+    order         Int
+    audioUrl      String?
+    imageUrl      String?
+    createdAt     DateTime     @default(now())
+    updatedAt     DateTime     @updatedAt
+
+    testPart       TestPart            @relation(fields: [testPartId], references: [id], onDelete: Cascade)
+    passage        TestPassage?        @relation(fields: [passageId], references: [id], onDelete: SetNull)
+    answers        TestAnswer[]
+    attemptAnswers TestAttemptAnswer[]
+
+    @@unique([testPartId, order])
+    @@map("test_questions")
+}
+
+model TestAnswer {
+    id         String  @id @default(uuid())
+    questionId String
+    content    String
+    isCorrect  Boolean @default(false)
+
+    question TestQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+    @@map("test_answers")
+}
+
+model TestAttempt {
+    id               String        @id @default(uuid())
+    testId           String
+    studentId        String?
+    guestName        String?
+    guestToken       String?       @unique
+    score            Float?
+    status           AttemptStatus @default(IN_PROGRESS)
+    startedAt        DateTime      @default(now())
+    submittedAt      DateTime?
+    remainingSeconds Int?
+    createdAt        DateTime      @default(now())
+    updatedAt        DateTime      @updatedAt
+
+    test    Test                @relation(fields: [testId], references: [id], onDelete: Cascade)
+    student User?               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    answers TestAttemptAnswer[]
+
+    @@index([testId, status])
+    @@index([studentId, testId])
+    @@map("test_attempts")
+}
+
+model TestAttemptAnswer {
+    id              String   @id @default(uuid())
+    attemptId       String
+    questionId      String
+    selectedAnswers String[]
+    isCorrect       Boolean?
+    answeredAt      DateTime @default(now())
+
+    attempt  TestAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+    question TestQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+    @@unique([attemptId, questionId])
+    @@map("test_attempt_answers")
+}
