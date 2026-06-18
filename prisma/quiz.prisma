@@ -17,12 +17,14 @@ model Quiz {
 }
 
 model Question {
-    id      String       @id @default(uuid())
-    quizId  String
-    content String
-    type    QuestionType @default(SINGLE_CHOICE)
-    points  Int          @default(1)
-    order   Int
+    id       String       @id @default(uuid())
+    quizId   String
+    content  String
+    type     QuestionType @default(SINGLE_CHOICE)
+    points   Int          @default(1)
+    order    Int
+    audioUrl String? // file âm thanh cho quiz listening
+    imageUrl String? // ảnh minh hoạ (TOEIC Part 1, reading question với hình…)
 
     quiz           Quiz                @relation(fields: [quizId], references: [id], onDelete: Cascade)
     answers        Answer[]

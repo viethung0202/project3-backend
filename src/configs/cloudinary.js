@@ -25,6 +25,23 @@ const uploadVideo = (file) => {
   });
 };
 
+// Audio upload — Cloudinary xử lý audio dưới resource_type 'video'
+const uploadAudio = (file) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: 'video',
+        folder: 'quiz-audio',
+      },
+      (err, result) => {
+        if (err) return reject(err);
+        resolve(result.secure_url);
+      },
+    );
+    stream.end(file.buffer);
+  });
+};
+
 // PDF / document upload — dùng resource_type 'raw' cho file không phải image/video
 const uploadPdf = (file) => {
   return new Promise((resolve, reject) => {
@@ -48,5 +65,6 @@ const uploadPdf = (file) => {
 export default {
   uploadImage,
   uploadVideo,
+  uploadAudio,
   uploadPdf,
 };

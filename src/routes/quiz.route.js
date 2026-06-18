@@ -4,6 +4,7 @@ import quizController from '../controllers/quiz.controller.js';
 import attemptController from '../controllers/quizAttempt.controller.js';
 import { protectRoute } from '../middlewares/protectRoute.js';
 import { requireRole } from '../middlewares/requireRole.js';
+import { uploadQuestionMedia } from '../middlewares/upload.js';
 
 const router = express.Router();
 
@@ -11,6 +12,10 @@ router.post(
   '/:quizId/questions',
   protectRoute,
   requireRole(['ACADEMIC_STAFF']),
+  uploadQuestionMedia.fields([
+    { name: 'audio', maxCount: 1 },
+    { name: 'image', maxCount: 1 },
+  ]),
   questionController.createQuestion,
 );
 

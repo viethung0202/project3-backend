@@ -27,6 +27,8 @@ const loadQuizForAttempt = async (quizId) => {
           type: true,
           points: true,
           order: true,
+          audioUrl: true,
+          imageUrl: true,
           answers: {
             select: { id: true, content: true }, // KHÔNG trả isCorrect
             orderBy: { id: 'asc' },
@@ -291,6 +293,8 @@ const getResult = async (attemptId, studentId) => {
           type: true,
           points: true,
           order: true,
+          audioUrl: true,
+          imageUrl: true,
           answers: { select: { id: true, content: true, isCorrect: true } },
         },
         orderBy: { order: 'asc' },
@@ -308,6 +312,8 @@ const getResult = async (attemptId, studentId) => {
     type: q.type,
     points: q.points,
     order: q.order,
+    audioUrl: q.audioUrl,
+    imageUrl: q.imageUrl,
     selectedAnswerIds: answerByQ[q.id]?.selectedAnswers || [],
     isCorrect: answerByQ[q.id]?.isCorrect === true,
     answers: q.answers, // có isCorrect để FE highlight

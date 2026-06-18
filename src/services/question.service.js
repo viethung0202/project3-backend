@@ -7,6 +7,8 @@ const questionSelect = {
   type: true,
   points: true,
   order: true,
+  audioUrl: true,
+  imageUrl: true,
   quiz: {
     select: {
       id: true,
@@ -33,7 +35,7 @@ const createQuestion = async (quizId, questionData) => {
     throw new Error('Quiz not found');
   }
 
-  const { content, type, points, order } = questionData;
+  const { content, type, points, order, audioUrl, imageUrl } = questionData;
 
   let nextOrder = order;
   if (nextOrder === undefined || nextOrder === null) {
@@ -51,8 +53,10 @@ const createQuestion = async (quizId, questionData) => {
       quizId,
       content,
       type,
-      points,
+      points: points !== undefined ? Number(points) : undefined,
       order: nextOrder,
+      audioUrl: audioUrl || null,
+      imageUrl: imageUrl || null,
     },
     select: questionSelect,
   });
@@ -68,13 +72,16 @@ const updateQuestion = async (id, questionData) => {
     throw new Error('Question not found');
   }
 
-  const { content, type, points, order } = questionData;
+  const { content, type, points, order, audioUrl, imageUrl } = questionData;
   const data = {};
 
   if (content !== undefined) data.content = content;
   if (type !== undefined) data.type = type;
-  if (points !== undefined) data.points = points;
+  if (points !== undefined) data.points = Number(points);
   if (order !== undefined) data.order = order;
+  // Empty string từ FormData = clear, undefined = giữ nguyên
+  if (audioUrl !== undefined) data.audioUrl = audioUrl || null;
+  if (imageUrl !== undefined) data.imageUrl = imageUrl || null;
 
   return prisma.question.update({
     where: { id },

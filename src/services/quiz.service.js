@@ -89,6 +89,8 @@ const getQuizById = async (id) => {
           type: true,
           points: true,
           order: true,
+          audioUrl: true,
+          imageUrl: true,
           answers: {
             select: {
               id: true,

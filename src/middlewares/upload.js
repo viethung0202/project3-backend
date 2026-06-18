@@ -14,4 +14,10 @@ export const uploadVideo = multer({
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
 });
 
+// Question media — audio + image cho câu hỏi listening/visual
+export const uploadQuestionMedia = multer({
+  storage,
+  limits: { fileSize: 30 * 1024 * 1024 }, // 30MB — đủ cho audio TOEIC 5-10 phút
+});
+
 export default upload;
