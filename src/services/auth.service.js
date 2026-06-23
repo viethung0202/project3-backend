@@ -2,6 +2,8 @@
 import prisma from '../configs/index.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import mailer from '../configs/mailer.js';
 
 const register = async (userData) => {
   const { fullName, email, password, role = 'STUDENT' } = userData;
@@ -151,9 +153,121 @@ const updateProfile = async (userId, profileData) => {
   });
 };
 
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 giờ
+
+const hashToken = (token) =>
+  crypto.createHash('sha256').update(token).digest('hex');
+
+const forgotPassword = async (email) => {
+  if (!email?.trim()) throw new Error('Vui lòng nhập email');
+
+  const user = await prisma.user.findUnique({
+    where: { email: email.trim() },
+    select: { id: true, email: true, fullName: true, isActive: true },
+  });
+
+  // Luôn trả success để không tiết lộ email tồn tại hay không
+  if (!user || !user.isActive) {
+    return { sent: false };
+  }
+
+  // Vô hiệu hóa token cũ chưa dùng của user
+  await prisma.passwordResetToken.deleteMany({
+    where: { userId: user.id, usedAt: null },
+  });
+
+  // Sinh token thô + lưu hash
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = hashToken(rawToken);
+
+  await prisma.passwordResetToken.create({
+    data: {
+      userId: user.id,
+      tokenHash,
+      expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+    },
+  });
+
+  const frontendUrl =
+    process.env.FRONTEND_URL || 'http://localhost:5173';
+  const resetUrl = `${frontendUrl}/reset-password?token=${rawToken}`;
+
+  mailer
+    .sendPasswordReset({
+      to: user.email,
+      fullName: user.fullName,
+      resetUrl,
+      expiresInMinutes: RESET_TOKEN_TTL_MS / 60000,
+    })
+    .catch((err) =>
+      console.error('[auth] Gửi email reset thất bại:', err.message),
+    );
+
+  return { sent: true };
+};
+
+const resetPassword = async (rawToken, newPassword) => {
+  if (!rawToken) throw new Error('Token không hợp lệ');
+  if (!newPassword) throw new Error('Vui lòng nhập mật khẩu mới');
+  if (newPassword.length < 6)
+    throw new Error('Mật khẩu mới phải có ít nhất 6 ký tự');
+
+  const tokenHash = hashToken(rawToken);
+  const record = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash },
+    include: { user: { select: { id: true, isActive: true } } },
+  });
+
+  if (!record || !record.user || !record.user.isActive) {
+    throw new Error('Token không hợp lệ hoặc đã được sử dụng');
+  }
+  if (record.usedAt) {
+    throw new Error('Token đã được sử dụng');
+  }
+  if (record.expiresAt < new Date()) {
+    throw new Error('Token đã hết hạn, vui lòng yêu cầu lại');
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashed = await bcrypt.hash(newPassword, salt);
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: record.userId },
+      data: { password: hashed },
+    }),
+    prisma.passwordResetToken.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    }),
+    // Xóa hết token còn lại của user
+    prisma.passwordResetToken.deleteMany({
+      where: { userId: record.userId, usedAt: null },
+    }),
+  ]);
+
+  return { message: 'Đặt lại mật khẩu thành công' };
+};
+
+const verifyResetToken = async (rawToken) => {
+  if (!rawToken) return { valid: false };
+  const tokenHash = hashToken(rawToken);
+  const record = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash },
+    select: { expiresAt: true, usedAt: true },
+  });
+  if (!record) return { valid: false };
+  if (record.usedAt) return { valid: false, reason: 'used' };
+  if (record.expiresAt < new Date()) return { valid: false, reason: 'expired' };
+  return { valid: true };
+};
+
 export default {
   register,
   login,
   changePassword,
   updateProfile,
+  forgotPassword,
+  resetPassword,
+  verifyResetToken,
 };

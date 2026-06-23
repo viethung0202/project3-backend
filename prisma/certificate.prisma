@@ -1,0 +1,21 @@
+enum CertificateStatus {
+  ACTIVE
+  REVOKED
+}
+
+model Certificate {
+  id         String            @id @default(uuid())
+  certNumber String            @unique // VD: ENG-2026-A3F5K9, dùng để verify công khai
+  userId     String
+  courseId   String
+  issuedAt   DateTime          @default(now())
+  score      Float? // điểm trung bình quiz (nếu có)
+  status     CertificateStatus @default(ACTIVE)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([certNumber])
+  @@map("certificates")
+}
