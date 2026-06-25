@@ -20,4 +20,10 @@ export const uploadQuestionMedia = multer({
   limits: { fileSize: 30 * 1024 * 1024 }, // 30MB — đủ cho audio TOEIC 5-10 phút
 });
 
+// Document — học liệu, mọi loại file (pdf, word, excel, ppt, video, audio)
+export const uploadDocument = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+});
+
 export default upload;

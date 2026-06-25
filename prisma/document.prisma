@@ -1,16 +1,35 @@
 model Document {
-    id           String   @id @default(uuid())
-    title        String
-    description  String?
-    fileUrl      String
-    fileType     String? // pdf, docx, mp4, ...
-    courseId     String? // optional, có thể không gắn course nào
-    uploadedById String
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
+    id            String   @id @default(uuid())
+    title         String
+    description   String?
+    fileUrl       String
+    fileType      String? // pdf, docx, mp4, ...
+    courseId      String? // optional, có thể không gắn course nào
+    uploadedById  String
+    isPublished   Boolean  @default(true) // false = không hiển thị cho student
+    allowDownload Boolean  @default(true) // false = chỉ xem online, không cho tải
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
 
     course     Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
     uploadedBy User    @relation(fields: [uploadedById], references: [id])
+    reviews    DocumentReview[]
 
     @@map("documents")
+}
+
+model DocumentReview {
+    id         String   @id @default(uuid())
+    documentId String
+    teacherId  String
+    rating     Int // 1-5 sao
+    comment    String?
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+
+    document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+    teacher  User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+    @@unique([documentId, teacherId]) // 1 teacher chỉ review 1 lần / document
+    @@map("document_reviews")
 }

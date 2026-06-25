@@ -19,6 +19,7 @@ model User {
   testAttempts      TestAttempt[] // học sinh làm test online
   lessonCompletions LessonCompletion[] // học sinh hoàn thành lesson
   uploadedDocuments Document[] // giáo vụ upload tài liệu
+  documentReviews   DocumentReview[] // giáo viên đánh giá học liệu
 
   @@map("users")
 }

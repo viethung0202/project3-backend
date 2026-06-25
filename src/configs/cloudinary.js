@@ -62,9 +62,39 @@ const uploadPdf = (file) => {
   });
 };
 
+// Generic document upload — auto-detect resource_type theo mimetype
+// Hỗ trợ PDF, Word, Excel, PPT, video, audio, image
+const uploadDocument = (file) => {
+  return new Promise((resolve, reject) => {
+    const mime = file.mimetype || '';
+    let resourceType = 'raw';
+    if (mime.startsWith('image/')) resourceType = 'image';
+    else if (mime.startsWith('video/') || mime.startsWith('audio/'))
+      resourceType = 'video';
+    else if (mime === 'application/pdf') resourceType = 'image';
+
+    const original = file.originalname.replace(/\.[^/.]+$/, '');
+    const ext = file.originalname.split('.').pop() || '';
+    const opts = {
+      resource_type: resourceType,
+      folder: 'documents',
+      public_id: `${Date.now()}_${original}`,
+    };
+    if (resourceType === 'raw' && ext) opts.format = ext;
+    if (mime === 'application/pdf') opts.format = 'pdf';
+
+    const stream = cloudinary.uploader.upload_stream(opts, (err, result) => {
+      if (err) return reject(err);
+      resolve({ url: result.secure_url, resourceType });
+    });
+    stream.end(file.buffer);
+  });
+};
+
 export default {
   uploadImage,
   uploadVideo,
   uploadAudio,
   uploadPdf,
+  uploadDocument,
 };
