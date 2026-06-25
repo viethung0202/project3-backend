@@ -20,6 +20,10 @@ model User {
   lessonCompletions LessonCompletion[] // học sinh hoàn thành lesson
   uploadedDocuments Document[] // giáo vụ upload tài liệu
   documentReviews   DocumentReview[] // giáo viên đánh giá học liệu
+  passwordResets    PasswordResetToken[] // token đặt lại mật khẩu
+  certificates      Certificate[] // chứng chỉ đã nhận
+  evaluations       StudentEvaluation[] @relation("EvaluationStudent") // đánh giá của bản thân (nếu là học sinh)
+  evaluationsGiven  StudentEvaluation[] @relation("EvaluationTeacher") // đánh giá đã cho (nếu là giáo viên)
 
   @@map("users")
 }

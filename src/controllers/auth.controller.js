@@ -125,6 +125,45 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    await authService.forgotPassword(req.body.email);
+    // Luôn trả message giống nhau để không tiết lộ email có tồn tại
+    res.status(200).json({
+      success: true,
+      message:
+        'Nếu email tồn tại trong hệ thống, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu.',
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Yêu cầu thất bại',
+    });
+  }
+};
+
+const verifyResetToken = async (req, res) => {
+  try {
+    const data = await authService.verifyResetToken(req.query.token);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    const data = await authService.resetPassword(token, newPassword);
+    res.status(200).json({ success: true, message: data.message });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Đặt lại mật khẩu thất bại',
+    });
+  }
+};
+
 export default {
   register,
   login,
@@ -132,4 +171,7 @@ export default {
   logout,
   changePassword,
   updateProfile,
+  forgotPassword,
+  verifyResetToken,
+  resetPassword,
 };

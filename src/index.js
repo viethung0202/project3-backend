@@ -27,6 +27,10 @@ import testPassageRoute from './routes/testPassage.route.js';
 import testQuestionRoute from './routes/testQuestion.route.js';
 import testAnswerRoute from './routes/testAnswer.route.js';
 import testAttemptRoute from './routes/testAttempt.route.js';
+import contactRoute from './routes/contact.route.js';
+import certificateRoute from './routes/certificate.route.js';
+import evaluationRoute from './routes/evaluation.route.js';
+import leaderboardRoute from './routes/leaderboard.route.js';
 import { v2 as cloudinary } from 'cloudinary';
 
 // Load biến môi trường
@@ -75,6 +79,10 @@ app.use('/api/test-passages', testPassageRoute);
 app.use('/api/test-questions', testQuestionRoute);
 app.use('/api/test-answers', testAnswerRoute);
 app.use('/api/test-attempts', testAttemptRoute);
+app.use('/api/contact', contactRoute);
+app.use('/api/certificates', certificateRoute);
+app.use('/api/evaluations', evaluationRoute);
+app.use('/api/leaderboard', leaderboardRoute);
 
 // Route test cơ bản
 app.get('/', (req, res) => {

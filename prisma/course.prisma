@@ -13,8 +13,10 @@ model Course {
   createdBy   User            @relation("CourseCreator", fields: [createdById], references: [id])
   modules     Module[]
   teachers    CourseTeacher[]
-  enrollments Enrollment[]
-  documents   Document[]
+  enrollments  Enrollment[]
+  documents    Document[]
+  certificates Certificate[]
+  evaluations  StudentEvaluation[]
 
   @@map("courses")
 }
