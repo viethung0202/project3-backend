@@ -3,16 +3,32 @@ model Lesson {
     moduleId  String
     title     String
     content   String? // nội dung dạng text (ghi chú ngắn)
-    videoUrl  String? // link video (nếu có)
-    pdfUrl    String? // link PDF bài giảng (upload lên Cloudinary)
+    videoUrl  String? // DEPRECATED — giữ tạm cho legacy, dùng LessonDocument thay thế
+    pdfUrl    String? // DEPRECATED — giữ tạm cho legacy, dùng LessonDocument thay thế
     order     Int // thứ tự lesson trong module
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
     module      Module             @relation(fields: [moduleId], references: [id], onDelete: Cascade)
     completions LessonCompletion[]
+    documents   LessonDocument[]
 
     @@map("lessons")
+}
+
+// Bảng nối lesson - document (many-to-many)
+model LessonDocument {
+    id         String   @id @default(uuid())
+    lessonId   String
+    documentId String
+    order      Int      @default(0) // thứ tự hiển thị trong lesson
+    createdAt  DateTime @default(now())
+
+    lesson   Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+    document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+    @@unique([lessonId, documentId])
+    @@map("lesson_documents")
 }
 
 // Đánh dấu học sinh đã hoàn thành lesson nào — dùng để tính progress của course

@@ -22,22 +22,56 @@ const documentSelect = {
       rating: true,
       comment: true,
       createdAt: true,
+      student: { select: { id: true, fullName: true, avatar: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  },
+  feedbacks: {
+    select: {
+      id: true,
+      content: true,
+      createdAt: true,
+      updatedAt: true,
       teacher: { select: { id: true, fullName: true, avatar: true } },
     },
     orderBy: { createdAt: 'desc' },
+  },
+  lessons: {
+    select: {
+      id: true,
+      order: true,
+      lesson: {
+        select: {
+          id: true,
+          title: true,
+          module: {
+            select: {
+              id: true,
+              title: true,
+              courseId: true,
+              course: { select: { id: true, title: true } },
+            },
+          },
+        },
+      },
+    },
   },
 };
 
 const computeStats = (doc) => {
   const reviews = doc.reviews || [];
-  if (reviews.length === 0) {
-    return { ...doc, avgRating: null, reviewCount: 0 };
-  }
-  const sum = reviews.reduce((s, r) => s + r.rating, 0);
+  const feedbacks = doc.feedbacks || [];
+  const avgRating =
+    reviews.length > 0
+      ? Math.round(
+          (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10,
+        ) / 10
+      : null;
   return {
     ...doc,
-    avgRating: Math.round((sum / reviews.length) * 10) / 10,
+    avgRating,
     reviewCount: reviews.length,
+    feedbackCount: feedbacks.length,
   };
 };
 
@@ -232,11 +266,65 @@ const remove = async (id) => {
   return { message: 'Đã xóa học liệu' };
 };
 
-// ========== REVIEWS (teacher) ==========
+// ========== REVIEWS (student) — rating + comment ==========
 
-const upsertReview = async ({ documentId, teacherId, rating, comment }) => {
+const upsertReview = async ({ documentId, studentId, rating, comment }) => {
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
     throw new Error('Rating phải từ 1 đến 5');
+  }
+  const doc = await prisma.document.findUnique({
+    where: { id: documentId },
+    select: { id: true, isPublished: true, courseId: true },
+  });
+  if (!doc) throw new Error('Document not found');
+  if (!doc.isPublished) {
+    throw new Error('Học liệu này chưa được công bố');
+  }
+  // Nếu doc gắn course → student phải đã enroll
+  if (doc.courseId) {
+    const enrolled = await prisma.enrollment.findUnique({
+      where: { studentId_courseId: { studentId, courseId: doc.courseId } },
+      select: { id: true },
+    });
+    if (!enrolled) {
+      throw new Error('Bạn phải đăng ký khóa học mới được đánh giá');
+    }
+  }
+
+  return prisma.documentReview.upsert({
+    where: { documentId_studentId: { documentId, studentId } },
+    update: { rating, comment: comment || null },
+    create: { documentId, studentId, rating, comment: comment || null },
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      createdAt: true,
+      updatedAt: true,
+      student: { select: { id: true, fullName: true, avatar: true } },
+    },
+  });
+};
+
+const deleteReview = async ({ documentId, studentId }) => {
+  const review = await prisma.documentReview.findUnique({
+    where: { documentId_studentId: { documentId, studentId } },
+    select: { id: true },
+  });
+  if (!review) throw new Error('Bạn chưa đánh giá học liệu này');
+  await prisma.documentReview.delete({
+    where: { documentId_studentId: { documentId, studentId } },
+  });
+  return { message: 'Đã xóa đánh giá' };
+};
+
+// ========== FEEDBACKS (teacher) — chỉ nội dung text ==========
+
+const upsertFeedback = async ({ documentId, teacherId, content }) => {
+  const text = (content || '').trim();
+  if (!text) throw new Error('Nội dung góp ý không được để trống');
+  if (text.length > 2000) {
+    throw new Error('Góp ý quá dài (tối đa 2000 ký tự)');
   }
   const doc = await prisma.document.findUnique({
     where: { id: documentId },
@@ -244,16 +332,13 @@ const upsertReview = async ({ documentId, teacherId, rating, comment }) => {
   });
   if (!doc) throw new Error('Document not found');
 
-  return prisma.documentReview.upsert({
-    where: {
-      documentId_teacherId: { documentId, teacherId },
-    },
-    update: { rating, comment: comment || null },
-    create: { documentId, teacherId, rating, comment: comment || null },
+  return prisma.documentFeedback.upsert({
+    where: { documentId_teacherId: { documentId, teacherId } },
+    update: { content: text },
+    create: { documentId, teacherId, content: text },
     select: {
       id: true,
-      rating: true,
-      comment: true,
+      content: true,
       createdAt: true,
       updatedAt: true,
       teacher: { select: { id: true, fullName: true, avatar: true } },
@@ -261,16 +346,16 @@ const upsertReview = async ({ documentId, teacherId, rating, comment }) => {
   });
 };
 
-const deleteReview = async ({ documentId, teacherId }) => {
-  const review = await prisma.documentReview.findUnique({
+const deleteFeedback = async ({ documentId, teacherId }) => {
+  const fb = await prisma.documentFeedback.findUnique({
     where: { documentId_teacherId: { documentId, teacherId } },
     select: { id: true },
   });
-  if (!review) throw new Error('Bạn chưa đánh giá học liệu này');
-  await prisma.documentReview.delete({
+  if (!fb) throw new Error('Bạn chưa góp ý cho học liệu này');
+  await prisma.documentFeedback.delete({
     where: { documentId_teacherId: { documentId, teacherId } },
   });
-  return { message: 'Đã xóa đánh giá' };
+  return { message: 'Đã xóa góp ý' };
 };
 
 export default {
@@ -283,4 +368,6 @@ export default {
   remove,
   upsertReview,
   deleteReview,
+  upsertFeedback,
+  deleteFeedback,
 };

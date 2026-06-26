@@ -131,12 +131,13 @@ const remove = async (req, res) => {
   }
 };
 
+// ===== STUDENT REVIEW =====
 const upsertReview = async (req, res) => {
   try {
     const { rating, comment } = req.body;
     const data = await documentService.upsertReview({
       documentId: req.params.id,
-      teacherId: req.user.id,
+      studentId: req.user.id,
       rating: Number(rating),
       comment,
     });
@@ -157,13 +158,50 @@ const deleteReview = async (req, res) => {
   try {
     const result = await documentService.deleteReview({
       documentId: req.params.id,
-      teacherId: req.user.id,
+      studentId: req.user.id,
     });
     res.status(200).json({ success: true, message: result.message });
   } catch (error) {
     res.status(mapStatus(error)).json({
       success: false,
       message: error.message || 'Xóa đánh giá thất bại',
+    });
+  }
+};
+
+// ===== TEACHER FEEDBACK =====
+const upsertFeedback = async (req, res) => {
+  try {
+    const { content } = req.body;
+    const data = await documentService.upsertFeedback({
+      documentId: req.params.id,
+      teacherId: req.user.id,
+      content,
+    });
+    res.status(200).json({
+      success: true,
+      message: 'Đã lưu góp ý',
+      data,
+    });
+  } catch (error) {
+    res.status(mapStatus(error)).json({
+      success: false,
+      message: error.message || 'Lưu góp ý thất bại',
+    });
+  }
+};
+
+const deleteFeedback = async (req, res) => {
+  try {
+    const result = await documentService.deleteFeedback({
+      documentId: req.params.id,
+      teacherId: req.user.id,
+    });
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    res.status(mapStatus(error)).json({
+      success: false,
+      message: error.message || 'Xóa góp ý thất bại',
     });
   }
 };
@@ -176,4 +214,6 @@ export default {
   remove,
   upsertReview,
   deleteReview,
+  upsertFeedback,
+  deleteFeedback,
 };

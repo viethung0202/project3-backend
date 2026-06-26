@@ -30,18 +30,32 @@ router.delete(
   documentController.remove,
 );
 
-// Teacher đánh giá
+// Student đánh giá (rating sao + comment)
 router.post(
   '/:id/reviews',
   protectRoute,
-  requireRole(['TEACHER']),
+  requireRole(['STUDENT']),
   documentController.upsertReview,
 );
 router.delete(
   '/:id/reviews/me',
   protectRoute,
-  requireRole(['TEACHER']),
+  requireRole(['STUDENT']),
   documentController.deleteReview,
+);
+
+// Teacher góp ý nội dung (chỉ text)
+router.post(
+  '/:id/feedbacks',
+  protectRoute,
+  requireRole(['TEACHER']),
+  documentController.upsertFeedback,
+);
+router.delete(
+  '/:id/feedbacks/me',
+  protectRoute,
+  requireRole(['TEACHER']),
+  documentController.deleteFeedback,
 );
 
 export default router;

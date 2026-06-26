@@ -38,4 +38,24 @@ router.delete(
   lessonController.unmarkComplete,
 );
 
+// Lesson documents — academic gắn / gỡ / đổi thứ tự
+router.post(
+  '/:id/documents',
+  protectRoute,
+  requireRole(['ACADEMIC_STAFF']),
+  lessonController.attachDocument,
+);
+router.delete(
+  '/:id/documents/:documentId',
+  protectRoute,
+  requireRole(['ACADEMIC_STAFF']),
+  lessonController.detachDocument,
+);
+router.put(
+  '/:id/documents/order',
+  protectRoute,
+  requireRole(['ACADEMIC_STAFF']),
+  lessonController.reorderDocuments,
+);
+
 export default router;

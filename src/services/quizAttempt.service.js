@@ -1,4 +1,5 @@
 import prisma from '../configs/index.js';
+import lessonService from './lesson.service.js';
 
 const ensureEnrolled = async (studentId, courseId) => {
   const enrollment = await prisma.enrollment.findUnique({
@@ -198,6 +199,7 @@ const submitAttempt = async (attemptId, studentId) => {
     select: {
       id: true,
       passingScore: true,
+      module: { select: { courseId: true } },
       questions: {
         select: {
           id: true,
@@ -245,6 +247,16 @@ const submitAttempt = async (attemptId, studentId) => {
       },
     }),
   ]);
+
+  // Recompute course progress (vì pass quiz ảnh hưởng % hoàn thành)
+  const courseId = quiz.module?.courseId;
+  if (courseId) {
+    try {
+      await lessonService.recomputeProgress(studentId, courseId);
+    } catch (err) {
+      console.error('recomputeProgress error after submit:', err.message);
+    }
+  }
 
   return {
     attemptId,

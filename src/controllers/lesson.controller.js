@@ -1,6 +1,12 @@
 import lessonService from '../services/lesson.service.js';
 import cloudinaryService from '../configs/cloudinary.js';
 
+const mapLessonDocStatus = (err) => {
+  const msg = err.message || '';
+  if (msg === 'Lesson not found' || msg === 'Document not found') return 404;
+  return 400;
+};
+
 const getLessonsByModuleId = async (req, res) => {
   try {
     const result = await lessonService.getLessonsByModuleId(req.params.moduleId);
@@ -136,6 +142,59 @@ const unmarkComplete = async (req, res) => {
   }
 };
 
+const attachDocument = async (req, res) => {
+  try {
+    const { documentId } = req.body;
+    if (!documentId) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'Thiếu documentId' });
+    }
+    const data = await lessonService.attachDocument(req.params.id, documentId);
+    res.status(201).json({
+      success: true,
+      message: 'Đã gắn tài liệu vào lesson',
+      data,
+    });
+  } catch (error) {
+    res.status(mapLessonDocStatus(error)).json({
+      success: false,
+      message: error.message || 'Gắn tài liệu thất bại',
+    });
+  }
+};
+
+const detachDocument = async (req, res) => {
+  try {
+    const result = await lessonService.detachDocument(
+      req.params.id,
+      req.params.documentId,
+    );
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    res.status(mapLessonDocStatus(error)).json({
+      success: false,
+      message: error.message || 'Gỡ tài liệu thất bại',
+    });
+  }
+};
+
+const reorderDocuments = async (req, res) => {
+  try {
+    const { documentIds } = req.body;
+    const result = await lessonService.reorderDocuments(
+      req.params.id,
+      documentIds,
+    );
+    res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    res.status(mapLessonDocStatus(error)).json({
+      success: false,
+      message: error.message || 'Đổi thứ tự thất bại',
+    });
+  }
+};
+
 export default {
   getLessonsByModuleId,
   createLesson,
@@ -144,4 +203,7 @@ export default {
   deleteLesson,
   markComplete,
   unmarkComplete,
+  attachDocument,
+  detachDocument,
+  reorderDocuments,
 };

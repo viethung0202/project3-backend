@@ -18,8 +18,9 @@ model User {
   createdTests      Test[] // giáo vụ tạo full test / mini test
   testAttempts      TestAttempt[] // học sinh làm test online
   lessonCompletions LessonCompletion[] // học sinh hoàn thành lesson
-  uploadedDocuments Document[] // giáo vụ upload tài liệu
-  documentReviews   DocumentReview[] // giáo viên đánh giá học liệu
+  uploadedDocuments  Document[] // giáo vụ upload tài liệu
+  documentReviews    DocumentReview[]   @relation("DocumentReviewStudent") // học sinh đánh giá học liệu
+  documentFeedbacks  DocumentFeedback[] @relation("DocumentFeedbackTeacher") // giáo viên góp ý học liệu
   passwordResets    PasswordResetToken[] // token đặt lại mật khẩu
   certificates      Certificate[] // chứng chỉ đã nhận
   evaluations       StudentEvaluation[] @relation("EvaluationStudent") // đánh giá của bản thân (nếu là học sinh)

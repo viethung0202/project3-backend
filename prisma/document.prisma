@@ -13,23 +13,42 @@ model Document {
 
     course     Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
     uploadedBy User    @relation(fields: [uploadedById], references: [id])
-    reviews    DocumentReview[]
+    reviews    DocumentReview[] // student rate sao + comment
+    feedbacks  DocumentFeedback[] // teacher góp ý nội dung
+    lessons    LessonDocument[] // các lesson dùng tài liệu này
 
     @@map("documents")
 }
 
+// Học sinh đánh giá học liệu — bắt buộc có rating 1-5
 model DocumentReview {
     id         String   @id @default(uuid())
     documentId String
-    teacherId  String
+    studentId  String
     rating     Int // 1-5 sao
     comment    String?
     createdAt  DateTime @default(now())
     updatedAt  DateTime @updatedAt
 
     document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-    teacher  User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+    student  User     @relation("DocumentReviewStudent", fields: [studentId], references: [id], onDelete: Cascade)
 
-    @@unique([documentId, teacherId]) // 1 teacher chỉ review 1 lần / document
+    @@unique([documentId, studentId]) // 1 student chỉ review 1 lần / document
     @@map("document_reviews")
+}
+
+// Giáo viên góp ý nội dung — chỉ có nội dung text, không có rating
+model DocumentFeedback {
+    id         String   @id @default(uuid())
+    documentId String
+    teacherId  String
+    content    String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+
+    document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+    teacher  User     @relation("DocumentFeedbackTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+
+    @@unique([documentId, teacherId]) // 1 teacher chỉ 1 góp ý / document
+    @@map("document_feedbacks")
 }
