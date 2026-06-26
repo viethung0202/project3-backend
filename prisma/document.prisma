@@ -2,12 +2,15 @@ model Document {
     id            String   @id @default(uuid())
     title         String
     description   String?
+    source        String? // nguồn: tên sách, website, tác giả, hoặc "Tự biên soạn"
     fileUrl       String
     fileType      String? // pdf, docx, mp4, ...
     courseId      String? // optional, có thể không gắn course nào
     uploadedById  String
     isPublished   Boolean  @default(true) // false = không hiển thị cho student
     allowDownload Boolean  @default(true) // false = chỉ xem online, không cho tải
+    downloadCount Int      @default(0) // số lần download
+    viewCount     Int      @default(0) // số lần xem
     createdAt     DateTime @default(now())
     updatedAt     DateTime @updatedAt
 

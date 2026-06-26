@@ -7,6 +7,7 @@ import { uploadDocument } from '../middlewares/upload.js';
 const router = express.Router();
 
 router.get('/', protectRoute, documentController.list);
+router.get('/sources', protectRoute, documentController.listSources);
 router.get('/:id', protectRoute, documentController.getById);
 
 router.post(
@@ -29,6 +30,10 @@ router.delete(
   requireRole(['ACADEMIC_STAFF']),
   documentController.remove,
 );
+
+// Metrics (track download / view) — auth-only, áp ACL theo role trong service
+router.post('/:id/download', protectRoute, documentController.trackDownload);
+router.post('/:id/view', protectRoute, documentController.trackView);
 
 // Student đánh giá (rating sao + comment)
 router.post(

@@ -11,21 +11,30 @@ const mapStatus = (err) => {
 
 const list = async (req, res) => {
   try {
-    const { courseId, search, fileType, published } = req.query;
+    const { courseId, search, fileType, published, sort, source } = req.query;
     let data;
     if (req.user.role === 'STUDENT') {
       data = await documentService.listForStudent(req.user.id, {
         courseId,
         search,
+        sort,
+        source,
       });
     } else if (req.user.role === 'TEACHER') {
-      data = await documentService.listForTeacher({ courseId, search });
+      data = await documentService.listForTeacher({
+        courseId,
+        search,
+        sort,
+        source,
+      });
     } else {
       data = await documentService.list({
         courseId,
         search,
         fileType,
         published,
+        sort,
+        source,
       });
     }
     res.status(200).json({ success: true, data });
@@ -70,6 +79,7 @@ const create = async (req, res) => {
       {
         title: req.body.title,
         description: req.body.description,
+        source: req.body.source,
         courseId: req.body.courseId || null,
         fileUrl: url,
         fileType: ext,
@@ -128,6 +138,44 @@ const remove = async (req, res) => {
       success: false,
       message: error.message || 'Xóa thất bại',
     });
+  }
+};
+
+const listSources = async (req, res) => {
+  try {
+    const forStudent = req.user.role === 'STUDENT';
+    const data = await documentService.distinctSources({
+      forStudent,
+      studentId: req.user.id,
+    });
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    res
+      .status(mapStatus(error))
+      .json({ success: false, message: error.message });
+  }
+};
+
+// ===== METRICS =====
+const trackDownload = async (req, res) => {
+  try {
+    await documentService.trackDownload(req.params.id, req.user);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res
+      .status(mapStatus(error))
+      .json({ success: false, message: error.message });
+  }
+};
+
+const trackView = async (req, res) => {
+  try {
+    await documentService.trackView(req.params.id, req.user);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res
+      .status(mapStatus(error))
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -208,10 +256,13 @@ const deleteFeedback = async (req, res) => {
 
 export default {
   list,
+  listSources,
   getById,
   create,
   update,
   remove,
+  trackDownload,
+  trackView,
   upsertReview,
   deleteReview,
   upsertFeedback,

@@ -4,12 +4,15 @@ const documentSelect = {
   id: true,
   title: true,
   description: true,
+  source: true,
   fileUrl: true,
   fileType: true,
   courseId: true,
   uploadedById: true,
   isPublished: true,
   allowDownload: true,
+  downloadCount: true,
+  viewCount: true,
   createdAt: true,
   updatedAt: true,
   course: { select: { id: true, title: true } },
@@ -75,36 +78,72 @@ const computeStats = (doc) => {
   };
 };
 
-const list = async ({ courseId, search, fileType, published } = {}) => {
+// sort: newest (default) | downloads | views | title
+const buildOrderBy = (sort) => {
+  switch (sort) {
+    case 'downloads':
+      return [{ downloadCount: 'desc' }, { createdAt: 'desc' }];
+    case 'views':
+      return [{ viewCount: 'desc' }, { createdAt: 'desc' }];
+    case 'title':
+      return [{ title: 'asc' }];
+    case 'newest':
+    default:
+      return [{ createdAt: 'desc' }];
+  }
+};
+
+const sortByRating = (items) =>
+  [...items].sort((a, b) => {
+    const ra = a.avgRating ?? -1;
+    const rb = b.avgRating ?? -1;
+    if (rb !== ra) return rb - ra;
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
+const list = async ({
+  courseId,
+  search,
+  fileType,
+  published,
+  source,
+  sort,
+} = {}) => {
   const where = {};
   if (courseId === 'null' || courseId === null) where.courseId = null;
   else if (courseId) where.courseId = courseId;
   if (fileType) where.fileType = fileType;
   if (published === 'true') where.isPublished = true;
   else if (published === 'false') where.isPublished = false;
+  if (source) where.source = source;
   if (search) {
     where.OR = [
       { title: { contains: search, mode: 'insensitive' } },
       { description: { contains: search, mode: 'insensitive' } },
+      { source: { contains: search, mode: 'insensitive' } },
     ];
   }
 
   const docs = await prisma.document.findMany({
     where,
     select: documentSelect,
-    orderBy: { createdAt: 'desc' },
+    orderBy: sort === 'rating' ? { createdAt: 'desc' } : buildOrderBy(sort),
   });
-  return docs.map(computeStats);
+  const result = docs.map(computeStats);
+  return sort === 'rating' ? sortByRating(result) : result;
 };
 
 // Teacher: thấy tất cả document (cả unpublished), kèm rating
-const listForTeacher = async ({ courseId, search } = {}) => {
-  return list({ courseId, search });
+const listForTeacher = async ({ courseId, search, sort, source } = {}) => {
+  return list({ courseId, search, sort, source });
 };
 
 // Cho student: chỉ thấy doc của course đã enroll + doc không gắn course (public-ish)
 // VÀ chỉ document đã isPublished=true
-const listForStudent = async (studentId, { search, courseId } = {}) => {
+const listForStudent = async (
+  studentId,
+  { search, courseId, sort, source } = {},
+) => {
   const enrollments = await prisma.enrollment.findMany({
     where: { studentId },
     select: { courseId: true },
@@ -124,12 +163,15 @@ const listForStudent = async (studentId, { search, courseId } = {}) => {
     where.courseId = courseId;
   }
 
+  if (source) where.source = source;
+
   if (search) {
     where.AND = [
       {
         OR: [
           { title: { contains: search, mode: 'insensitive' } },
           { description: { contains: search, mode: 'insensitive' } },
+          { source: { contains: search, mode: 'insensitive' } },
         ],
       },
     ];
@@ -138,9 +180,35 @@ const listForStudent = async (studentId, { search, courseId } = {}) => {
   const docs = await prisma.document.findMany({
     where,
     select: documentSelect,
-    orderBy: { createdAt: 'desc' },
+    orderBy: sort === 'rating' ? { createdAt: 'desc' } : buildOrderBy(sort),
   });
-  return docs.map(computeStats);
+  const result = docs.map(computeStats);
+  return sort === 'rating' ? sortByRating(result) : result;
+};
+
+// Lấy danh sách distinct sources để render filter dropdown
+const distinctSources = async ({ forStudent, studentId } = {}) => {
+  const where = { source: { not: null } };
+
+  if (forStudent && studentId) {
+    const enrollments = await prisma.enrollment.findMany({
+      where: { studentId },
+      select: { courseId: true },
+    });
+    where.isPublished = true;
+    where.OR = [
+      { courseId: null },
+      { courseId: { in: enrollments.map((e) => e.courseId) } },
+    ];
+  }
+
+  const rows = await prisma.document.findMany({
+    where,
+    select: { source: true },
+    distinct: ['source'],
+    orderBy: { source: 'asc' },
+  });
+  return rows.map((r) => r.source).filter(Boolean);
 };
 
 const getById = async (id, requester) => {
@@ -177,6 +245,7 @@ const create = async (data, uploadedById) => {
   const {
     title,
     description,
+    source,
     fileUrl,
     fileType,
     courseId,
@@ -185,6 +254,12 @@ const create = async (data, uploadedById) => {
   } = data;
   if (!title || !fileUrl) {
     throw new Error('Thiếu tiêu đề hoặc file');
+  }
+  if (!source?.trim()) {
+    throw new Error('Vui lòng nhập nguồn tài liệu');
+  }
+  if (source.trim().length > 300) {
+    throw new Error('Nguồn tài liệu quá dài (tối đa 300 ký tự)');
   }
 
   if (courseId) {
@@ -199,6 +274,7 @@ const create = async (data, uploadedById) => {
     data: {
       title,
       description: description || null,
+      source: source.trim(),
       fileUrl,
       fileType: fileType || null,
       courseId: courseId || null,
@@ -221,6 +297,7 @@ const update = async (id, data) => {
   const {
     title,
     description,
+    source,
     fileUrl,
     fileType,
     courseId,
@@ -230,6 +307,13 @@ const update = async (id, data) => {
   const patch = {};
   if (title !== undefined) patch.title = title;
   if (description !== undefined) patch.description = description;
+  if (source !== undefined) {
+    const trimmed = (source || '').trim();
+    if (!trimmed) throw new Error('Vui lòng nhập nguồn tài liệu');
+    if (trimmed.length > 300)
+      throw new Error('Nguồn tài liệu quá dài (tối đa 300 ký tự)');
+    patch.source = trimmed;
+  }
   if (fileUrl !== undefined) patch.fileUrl = fileUrl;
   if (fileType !== undefined) patch.fileType = fileType;
   if (isPublished !== undefined) patch.isPublished = !!isPublished;
@@ -266,17 +350,98 @@ const remove = async (id) => {
   return { message: 'Đã xóa học liệu' };
 };
 
+// ========== METRICS ==========
+
+const trackDownload = async (id, requester) => {
+  const doc = await prisma.document.findUnique({
+    where: { id },
+    select: { id: true, isPublished: true, allowDownload: true, courseId: true },
+  });
+  if (!doc) throw new Error('Document not found');
+
+  if (requester?.role === 'STUDENT') {
+    if (!doc.isPublished) throw new Error('Học liệu này chưa được công bố');
+    if (!doc.allowDownload) throw new Error('Học liệu này không cho phép tải');
+    if (doc.courseId) {
+      const enrolled = await prisma.enrollment.findUnique({
+        where: {
+          studentId_courseId: {
+            studentId: requester.id,
+            courseId: doc.courseId,
+          },
+        },
+        select: { id: true },
+      });
+      if (!enrolled) throw new Error('Bạn không có quyền tải học liệu này');
+    }
+  }
+
+  await prisma.document.update({
+    where: { id },
+    data: { downloadCount: { increment: 1 } },
+  });
+  return { success: true };
+};
+
+const trackView = async (id, requester) => {
+  const doc = await prisma.document.findUnique({
+    where: { id },
+    select: { id: true, isPublished: true, courseId: true },
+  });
+  if (!doc) throw new Error('Document not found');
+
+  if (requester?.role === 'STUDENT') {
+    if (!doc.isPublished) throw new Error('Học liệu này chưa được công bố');
+    if (doc.courseId) {
+      const enrolled = await prisma.enrollment.findUnique({
+        where: {
+          studentId_courseId: {
+            studentId: requester.id,
+            courseId: doc.courseId,
+          },
+        },
+        select: { id: true },
+      });
+      if (!enrolled) throw new Error('Bạn không có quyền xem học liệu này');
+    }
+  }
+
+  await prisma.document.update({
+    where: { id },
+    data: { viewCount: { increment: 1 } },
+  });
+  return { success: true };
+};
+
 // ========== REVIEWS (student) — rating + comment ==========
+
+const REVIEW_COOLDOWN_MS = 30 * 1000; // 30s giữa 2 lần update review của cùng student/doc
 
 const upsertReview = async ({ documentId, studentId, rating, comment }) => {
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
     throw new Error('Rating phải từ 1 đến 5');
+  }
+  if (comment && comment.length > 1000) {
+    throw new Error('Bình luận quá dài (tối đa 1000 ký tự)');
   }
   const doc = await prisma.document.findUnique({
     where: { id: documentId },
     select: { id: true, isPublished: true, courseId: true },
   });
   if (!doc) throw new Error('Document not found');
+
+  // Rate limit: chống spam update liên tục
+  const existing = await prisma.documentReview.findUnique({
+    where: { documentId_studentId: { documentId, studentId } },
+    select: { updatedAt: true },
+  });
+  if (existing) {
+    const elapsed = Date.now() - new Date(existing.updatedAt).getTime();
+    if (elapsed < REVIEW_COOLDOWN_MS) {
+      const wait = Math.ceil((REVIEW_COOLDOWN_MS - elapsed) / 1000);
+      throw new Error(`Vui lòng đợi ${wait}s trước khi cập nhật đánh giá`);
+    }
+  }
   if (!doc.isPublished) {
     throw new Error('Học liệu này chưa được công bố');
   }
@@ -320,6 +485,8 @@ const deleteReview = async ({ documentId, studentId }) => {
 
 // ========== FEEDBACKS (teacher) — chỉ nội dung text ==========
 
+const FEEDBACK_COOLDOWN_MS = 30 * 1000;
+
 const upsertFeedback = async ({ documentId, teacherId, content }) => {
   const text = (content || '').trim();
   if (!text) throw new Error('Nội dung góp ý không được để trống');
@@ -331,6 +498,18 @@ const upsertFeedback = async ({ documentId, teacherId, content }) => {
     select: { id: true },
   });
   if (!doc) throw new Error('Document not found');
+
+  const existing = await prisma.documentFeedback.findUnique({
+    where: { documentId_teacherId: { documentId, teacherId } },
+    select: { updatedAt: true },
+  });
+  if (existing) {
+    const elapsed = Date.now() - new Date(existing.updatedAt).getTime();
+    if (elapsed < FEEDBACK_COOLDOWN_MS) {
+      const wait = Math.ceil((FEEDBACK_COOLDOWN_MS - elapsed) / 1000);
+      throw new Error(`Vui lòng đợi ${wait}s trước khi cập nhật góp ý`);
+    }
+  }
 
   return prisma.documentFeedback.upsert({
     where: { documentId_teacherId: { documentId, teacherId } },
@@ -362,10 +541,13 @@ export default {
   list,
   listForTeacher,
   listForStudent,
+  distinctSources,
   getById,
   create,
   update,
   remove,
+  trackDownload,
+  trackView,
   upsertReview,
   deleteReview,
   upsertFeedback,

@@ -94,6 +94,17 @@ app.get('/', (req, res) => {
 
 // ====================== ERROR HANDLING ======================
 app.use((err, req, res, next) => {
+  // Multer errors (file size, fileFilter reject, ...)
+  if (err && err.name === 'MulterError') {
+    let msg = 'Upload file thất bại';
+    if (err.code === 'LIMIT_FILE_SIZE') msg = 'File quá lớn';
+    return res.status(400).json({ success: false, message: msg });
+  }
+  // fileFilter custom error (Error object, không phải MulterError)
+  if (err && err.message && req.file === undefined && req.files === undefined) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+
   console.error(err.stack);
   res.status(500).json({
     success: false,
